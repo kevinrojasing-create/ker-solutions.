@@ -266,27 +266,65 @@ def get_dashboard_status(db: Session = Depends(get_db)):
 @app.post("/triage/analyze", response_model=TriageResult)
 async def analyze_failure_image(file: UploadFile = File(...)):
     """
-    Mock AI Vision Triage.
-    In real production, this would send the image to a TensorFlow/PyTorch model
-    or an API like GPT-4 Vision / Google Vertex AI Vision.
+    Real AI Vision Triage using Google Gemini 1.5 Flash.
+    Analyzes facility maintenance images and provides expert diagnosis.
     """
-    # Simulate processing delay
-    # analyze(file.file)
+    import google.generativeai as genai
+    import os
+    import base64
     
-    # Deterministic mock based on filename length or random
-    outcomes = [
-        {"d": "Cortocircuito Eléctrico Detectado", "s": "Alta", "r": "Cortar energía inmediatamente. Llamar a Electricista."},
-        {"d": "Filtro HVAC Obstruido", "s": "Baja", "r": "Limpiar o reemplazar filtro de aire."},
-        {"d": "Fuga de Agua", "s": "Media", "r": "Verificar apriete de válvula. Llamar a Gasfiter si persiste."},
-    ]
-    outcome = random.choice(outcomes)
+    # Get API key from environment
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        # Fallback to mock if no API key
+        return TriageResult(
+            diagnosis="API Key no configurada - Modo simulación",
+            severity="Media",
+            recommended_action="Configurar GEMINI_API_KEY en variables de entorno",
+            confidence=0.0
+        )
     
-    return TriageResult(
-        diagnosis=outcome["d"],
-        severity=outcome["s"],
-        recommended_action=outcome["r"],
-        confidence=round(random.uniform(0.85, 0.99), 2)
-    )
+    try:
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        
+        # Read image
+        image_bytes = await file.read()
+        image_b64 = base64.b64encode(image_bytes).decode()
+        
+        # Expert prompt
+        prompt = """Actúa como un experto en Facility Management con 8 años de experiencia. 
+Analiza esta foto técnica de un local comercial e identifica:
+
+1. Tipo de avería o problema detectado
+2. Nivel de riesgo (Crítico/Medio/Bajo)
+3. Acción inmediata sugerida
+
+Responde en formato JSON con estas claves exactas:
+{
+  "diagnosis": "descripción técnica del problema",
+  "severity": "Alta/Media/Baja",
+  "recommended_action": "acción específica a tomar",
+  "confidence": 0.95
+}"""
+        
+        response = model.generate_content([prompt, {"mime_type": "image/jpeg", "data": image_b64}])
+        
+        # Parse JSON response
+        import json
+        result = json.loads(response.text.strip().replace("```json", "").replace("```", ""))
+        
+        return TriageResult(**result)
+        
+    except Exception as e:
+        # Fallback on error
+        return TriageResult(
+            diagnosis=f"Error en análisis IA: {str(e)}",
+            severity="Media",
+            recommended_action="Revisar manualmente la imagen",
+            confidence=0.0
+        )
+
 
 @app.get("/alerts/legal", response_model=List[LegalAlert])
 def get_legal_alerts():
