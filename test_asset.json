@@ -1,0 +1,9 @@
+{
+    "id": "IGLESIA001",
+    "name": "Caldera - Iglesia San Pedro",
+    "category": "HVAC",
+    "install_date": "2023-01-15T00:00:00",
+    "last_maintenance": "2024-11-01T00:00:00",
+    "usage_hours_per_day": 10.0,
+    "maintenance_interval_days": 180
+}

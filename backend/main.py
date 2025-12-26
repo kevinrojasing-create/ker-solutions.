@@ -66,6 +66,26 @@ class LegalAlert(BaseModel):
     days_remaining: int
     severity: str
 
+class TicketCreate(BaseModel):
+    asset_id: Optional[str] = None
+    description: str
+    priority: str  # "Alta", "Media", "Baja"
+    image_base64: Optional[str] = None
+
+class Ticket(BaseModel):
+    id: int
+    asset_id: Optional[str]
+    description: str
+    priority: str
+    status: str
+    image_base64: Optional[str]
+    created_at: datetime
+    ai_diagnosis: Optional[str]
+    
+    class Config:
+        orm_mode = True
+
+
 # --- Seed Data Logic ---
 from sqlalchemy.exc import IntegrityError
 
@@ -188,6 +208,26 @@ def create_asset(asset: AssetCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_asset)
     return new_asset
+
+
+@app.post("/tickets", response_model=Ticket, status_code=201)
+def create_ticket(ticket: TicketCreate, db: Session = Depends(get_db)):
+    new_ticket = sql_models.TicketDB(
+        asset_id=ticket.asset_id,
+        description=ticket.description,
+        priority=ticket.priority,
+        image_base64=ticket.image_base64,
+        created_at=datetime.now(),
+        status="Pendiente"
+    )
+    db.add(new_ticket)
+    db.commit()
+    db.refresh(new_ticket)
+    return new_ticket
+
+@app.get("/tickets", response_model=List[Ticket])
+def get_tickets(db: Session = Depends(get_db)):
+    return db.query(sql_models.TicketDB).all()
 
 
 
