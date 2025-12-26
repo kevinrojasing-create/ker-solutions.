@@ -266,17 +266,16 @@ def get_dashboard_status(db: Session = Depends(get_db)):
 @app.post("/triage/analyze", response_model=TriageResult)
 async def analyze_failure_image(file: UploadFile = File(...)):
     """
-    Real AI Vision Triage using Google Gemini 1.5 Flash.
+    Real AI Vision Triage using Google Gemini API (direct REST).
     Analyzes facility maintenance images and provides expert diagnosis.
     """
-    import google.generativeai as genai
     import os
     import base64
+    import httpx
     
     # Get API key from environment
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
-        # Fallback to mock if no API key
         return TriageResult(
             diagnosis="API Key no configurada - Modo simulación",
             severity="Media",
@@ -285,41 +284,68 @@ async def analyze_failure_image(file: UploadFile = File(...)):
         )
     
     try:
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-pro-vision')
-        
-        # Read image
+        # Read and encode image
         image_bytes = await file.read()
         image_b64 = base64.b64encode(image_bytes).decode()
         
         # Expert prompt
-        prompt = """Actúa como un experto en Facility Management con 8 años de experiencia. 
-Analiza esta foto técnica de un local comercial e identifica:
+        prompt = """Actúa como un experto en Facility Management. Analiza esta foto técnica e identifica:
 
-1. Tipo de avería o problema detectado
-2. Nivel de riesgo (Crítico/Medio/Bajo)
+1. Tipo de avería o problema
+2. Nivel de riesgo (Alta/Media/Baja)
 3. Acción inmediata sugerida
 
-Responde en formato JSON con estas claves exactas:
+Responde SOLO en formato JSON:
 {
-  "diagnosis": "descripción técnica del problema",
+  "diagnosis": "descripción del problema",
   "severity": "Alta/Media/Baja",
-  "recommended_action": "acción específica a tomar",
+  "recommended_action": "acción específica",
   "confidence": 0.95
 }"""
         
-        response = model.generate_content([prompt, {"mime_type": "image/jpeg", "data": image_b64}])
+        # Call Gemini API directly
+        url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={api_key}"
         
-        # Parse JSON response
+        payload = {
+            "contents": [{
+                "parts": [
+                    {"text": prompt},
+                    {
+                        "inline_data": {
+                            "mime_type": "image/jpeg",
+                            "data": image_b64
+                        }
+                    }
+                ]
+            }]
+        }
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.post(url, json=payload, timeout=30.0)
+            response.raise_for_status()
+            result = response.json()
+        
+        # Extract text from response
+        text = result['candidates'][0]['content']['parts'][0]['text']
+        
+        # Parse JSON from text
         import json
-        result = json.loads(response.text.strip().replace("```json", "").replace("```", ""))
-        
-        return TriageResult(**result)
+        import re
+        json_match = re.search(r'\{[^}]+\}', text, re.DOTALL)
+        if json_match:
+            diagnosis_data = json.loads(json_match.group())
+            return TriageResult(**diagnosis_data)
+        else:
+            return TriageResult(
+                diagnosis=text[:200],
+                severity="Media",
+                recommended_action="Revisar análisis completo",
+                confidence=0.8
+            )
         
     except Exception as e:
-        # Fallback on error
         return TriageResult(
-            diagnosis=f"Error en análisis IA: {str(e)}",
+            diagnosis=f"Error en análisis: {str(e)[:100]}",
             severity="Media",
             recommended_action="Revisar manualmente la imagen",
             confidence=0.0
