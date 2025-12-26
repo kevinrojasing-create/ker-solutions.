@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/api.dart';
@@ -38,18 +39,28 @@ class _TicketScreenState extends State<TicketScreen> {
       setState(() => _isSubmitting = true);
       
       try {
-        await _api.submitTicket(_descriptionController.text, "High");
+        String? imageBase64;
+        if (_image != null) {
+          final bytes = await _image!.readAsBytes();
+          imageBase64 = base64Encode(bytes);
+        }
+        
+        await _api.createTicket(
+          description: _descriptionController.text,
+          priority: "Alta",
+          imageBase64: imageBase64,
+        );
         
         if (mounted) {
            ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('¡Ticket Enviado Exitosamente! Triage Iniciado.')),
+            const SnackBar(content: Text('✅ Ticket creado exitosamente')),
           );
           Navigator.pop(context);
         }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: $e')),
+            SnackBar(content: Text('❌ Error: $e')),
           );
         }
       } finally {
@@ -57,6 +68,7 @@ class _TicketScreenState extends State<TicketScreen> {
       }
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

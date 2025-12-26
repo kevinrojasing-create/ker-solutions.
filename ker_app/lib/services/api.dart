@@ -132,9 +132,27 @@ class ApiService {
     }
   }
 
-  Future<void> submitTicket(String description, String priority) async {
-    // Mock submission
-    await Future.delayed(Duration(seconds: 1));
-    return; 
+  Future<void> createTicket({
+    required String description,
+    required String priority,
+    String? imageBase64,
+    String? assetId,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/tickets'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'description': description,
+        'priority': priority,
+        'image_base64': imageBase64,
+        'asset_id': assetId,
+      }),
+    );
+    
+    if (response.statusCode != 201) {
+      final error = json.decode(utf8.decode(response.bodyBytes));
+      throw Exception(error['detail'] ?? 'Failed to create ticket');
+    }
   }
 }
+
