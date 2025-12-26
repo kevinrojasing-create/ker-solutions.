@@ -1,0 +1,9 @@
+venv/
+__pycache__/
+*.pyc
+.env
+ker.db
+ker_app/build/
+ker_app/.dart_tool/
+ker_app/.flutter-plugins
+ker_app/.flutter-plugins-dependencies
