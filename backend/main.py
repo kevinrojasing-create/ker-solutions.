@@ -183,11 +183,12 @@ def create_asset(asset: AssetCreate, db: Session = Depends(get_db)):
     if existing:
         raise HTTPException(status_code=400, detail=f"Asset with ID {asset.id} already exists")
     
-    new_asset = sql_models.AssetDB(**asset.dict())
+    new_asset = sql_models.AssetDB(**asset.model_dump())
     db.add(new_asset)
     db.commit()
     db.refresh(new_asset)
     return new_asset
+
 
 
 @app.get("/assets/{asset_id}/health", response_model=AssetHealth)
