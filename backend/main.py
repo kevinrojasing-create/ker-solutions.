@@ -166,28 +166,29 @@ def home():
 def get_assets(db: Session = Depends(get_db)):
     return db.query(sql_models.AssetDB).all()
 
-class AssetCreate(BaseModel):
-    id: str
-    name: str
-    category: str
-    install_date: datetime
-    last_maintenance: datetime
-    usage_hours_per_day: float
-    maintenance_interval_days: int = 180
-    image_url: Optional[str] = None
+# Temporarily disabled for debugging
+# class AssetCreate(BaseModel):
+#     id: str
+#     name: str
+#     category: str
+#     install_date: datetime
+#     last_maintenance: datetime
+#     usage_hours_per_day: float
+#     maintenance_interval_days: int = 180
+#     image_url: Optional[str] = None
 
-@app.post("/assets", response_model=Asset, status_code=201)
-def create_asset(asset: AssetCreate, db: Session = Depends(get_db)):
-    # Check if asset ID already exists
-    existing = db.query(sql_models.AssetDB).filter(sql_models.AssetDB.id == asset.id).first()
-    if existing:
-        raise HTTPException(status_code=400, detail=f"Asset with ID {asset.id} already exists")
-    
-    new_asset = sql_models.AssetDB(**asset.model_dump())
-    db.add(new_asset)
-    db.commit()
-    db.refresh(new_asset)
-    return new_asset
+# @app.post("/assets", response_model=Asset, status_code=201)
+# def create_asset(asset: AssetCreate, db: Session = Depends(get_db)):
+#     # Check if asset ID already exists
+#     existing = db.query(sql_models.AssetDB).filter(sql_models.AssetDB.id == asset.id).first()
+#     if existing:
+#         raise HTTPException(status_code=400, detail=f"Asset with ID {asset.id} already exists")
+#     
+#     new_asset = sql_models.AssetDB(**asset.model_dump())
+#     db.add(new_asset)
+#     db.commit()
+#     db.refresh(new_asset)
+#     return new_asset
 
 
 
