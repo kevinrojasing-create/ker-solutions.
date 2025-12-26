@@ -286,7 +286,7 @@ async def analyze_failure_image(file: UploadFile = File(...)):
     
     try:
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-pro-vision')
         
         # Read image
         image_bytes = await file.read()
