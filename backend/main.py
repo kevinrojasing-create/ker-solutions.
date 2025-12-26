@@ -7,8 +7,8 @@ import random
 
 # DB Imports
 from sqlalchemy.orm import Session
-from .database import SessionLocal, engine
-from . import sql_models
+from database import SessionLocal, engine
+import sql_models
 
 # Create Tables
 sql_models.Base.metadata.create_all(bind=engine)
