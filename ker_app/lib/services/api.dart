@@ -103,6 +103,35 @@ class ApiService {
     }
   }
 
+  Future<void> createAsset({
+    required String id,
+    required String name,
+    required String category,
+    required DateTime installDate,
+    required DateTime lastMaintenance,
+    required double usageHoursPerDay,
+    required int maintenanceIntervalDays,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/assets'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'id': id,
+        'name': name,
+        'category': category,
+        'install_date': installDate.toIso8601String(),
+        'last_maintenance': lastMaintenance.toIso8601String(),
+        'usage_hours_per_day': usageHoursPerDay,
+        'maintenance_interval_days': maintenanceIntervalDays,
+      }),
+    );
+    
+    if (response.statusCode != 201) {
+      final error = json.decode(utf8.decode(response.bodyBytes));
+      throw Exception(error['detail'] ?? 'Failed to create asset');
+    }
+  }
+
   Future<void> submitTicket(String description, String priority) async {
     // Mock submission
     await Future.delayed(Duration(seconds: 1));

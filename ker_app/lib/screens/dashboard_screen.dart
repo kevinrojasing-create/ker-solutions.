@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/api.dart';
 import 'ticket_screen.dart';
+import 'add_asset_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -94,6 +95,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 )),
 
                 const SizedBox(height: 24),
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const AddAssetScreen()),
+                    );
+                    // Refresh dashboard if asset was created
+                    if (result == true) {
+                      setState(() {
+                        _statusFuture = _api.getDashboardStatus();
+                      });
+                    }
+                  },
+                  icon: const Icon(Icons.add_business),
+                  label: const Text('Registrar Nuevo Activo'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.all(16),
+                    textStyle: const TextStyle(fontSize: 18),
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 12),
                 ElevatedButton.icon(
                   onPressed: () {
                     Navigator.push(
