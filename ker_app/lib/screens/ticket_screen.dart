@@ -63,19 +63,70 @@ class _TicketScreenState extends State<TicketScreen> {
 
   Future<void> _submit() async {
     if (_formKey.currentState!.validate()) {
+      if (_image == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('⚠️ Por favor selecciona una imagen')),
+        );
+        return;
+      }
+
       setState(() => _isSubmitting = true);
       
       try {
+        // Step 1: Analyze image with AI
         String? imageBase64;
-        if (_image != null) {
-          final bytes = await _image!.readAsBytes();
-          imageBase64 = base64Encode(bytes);
+        final bytes = await _image!.readAsBytes();
+        imageBase64 = base64Encode(bytes);
+        
+        final aiDiagnosis = await _api.analyzeImage(_image!);
+        
+        // Step 2: Show AI diagnosis to user
+        if (mounted) {
+          final confirmed = await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('🤖 Diagnóstico IA'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Diagnóstico:', style: TextStyle(fontWeight: FontWeight.bold)),
+                  Text(aiDiagnosis['diagnosis'] ?? 'N/A'),
+                  SizedBox(height: 12),
+                  Text('Severidad:', style: TextStyle(fontWeight: FontWeight.bold)),
+                  Text(aiDiagnosis['severity'] ?? 'N/A'),
+                  SizedBox(height: 12),
+                  Text('Acción Recomendada:', style: TextStyle(fontWeight: FontWeight.bold)),
+                  Text(aiDiagnosis['recommended_action'] ?? 'N/A'),
+                  SizedBox(height: 12),
+                  Text('Confianza: ${((aiDiagnosis['confidence'] ?? 0) * 100).toStringAsFixed(0)}%'),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('Cancelar'),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text('Crear Ticket'),
+                ),
+              ],
+            ),
+          );
+          
+          if (confirmed != true) {
+            setState(() => _isSubmitting = false);
+            return;
+          }
         }
         
+        // Step 3: Create ticket with AI diagnosis
         await _api.createTicket(
           description: _descriptionController.text,
           priority: "Alta",
           imageBase64: imageBase64,
+          aiDiagnosis: aiDiagnosis['diagnosis'],
         );
         
         if (mounted) {

@@ -132,11 +132,36 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>> analyzeImage(XFile image) async {
+    final bytes = await image.readAsBytes();
+    
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse('$baseUrl/triage/analyze'),
+    );
+    
+    request.files.add(http.MultipartFile.fromBytes(
+      'file',
+      bytes,
+      filename: 'image.jpg',
+    ));
+    
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+    
+    if (response.statusCode == 200) {
+      return json.decode(utf8.decode(response.bodyBytes));
+    } else {
+      throw Exception('Failed to analyze image');
+    }
+  }
+
   Future<void> createTicket({
     required String description,
     required String priority,
     String? imageBase64,
     String? assetId,
+    String? aiDiagnosis,
   }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/tickets'),
