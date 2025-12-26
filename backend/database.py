@@ -10,13 +10,18 @@ SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./ker.db")
 if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
     SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-# SQLite requires specific args, PostgreSQL does not
+# SQLite requires specific args, PostgreSQL requires SSL on Render
 connect_args = {}
 if "sqlite" in SQLALCHEMY_DATABASE_URL:
     connect_args = {"check_same_thread": False}
+elif "postgresql" in SQLALCHEMY_DATABASE_URL:
+    connect_args = {"connect_timeout": 10}
 
 engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args=connect_args
+    SQLALCHEMY_DATABASE_URL, 
+    connect_args=connect_args,
+    pool_pre_ping=True,  # Verify connections before using
+    pool_recycle=300,    # Recycle connections every 5 minutes
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
