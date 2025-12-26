@@ -3,12 +3,15 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
+# TEMPORARY: Force SQLite until PostgreSQL is configured correctly
 # Get DB URL from Environment (Render) or fallback to Local SQLite
-SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./ker.db")
+# SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./ker.db")
+SQLALCHEMY_DATABASE_URL = "sqlite:///./ker.db"  # Force SQLite for now
 
 # Fix Render's "postgres://" -> SQLAlchemy's "postgresql://"
 if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
     SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
 
 # SQLite requires specific args, PostgreSQL requires SSL on Render
 connect_args = {}
