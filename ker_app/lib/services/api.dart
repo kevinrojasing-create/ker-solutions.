@@ -80,10 +80,8 @@ class ApiService {
   // Use 10.0.2.2 for Android Emulator to access localhost
   // Use localhost for Web
   static String get baseUrl {
-    if (kIsWeb) return "http://127.0.0.1:8000";
-    // IP Local detectada: 192.168.1.104
-    // Usamos esta IP para que el celular físico pueda ver el backend
-    return "http://192.168.1.104:8000"; 
+    // ☁️ URL de Producción (Render)
+    return "https://ker-solutions.onrender.com"; 
   }
 
   Future<List<Asset>> getAssets() async {
