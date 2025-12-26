@@ -67,6 +67,13 @@ class LegalAlert(BaseModel):
     severity: str
 
 # --- Seed Data Logic ---
+from sqlalchemy.exc import IntegrityError
+
+# ... (imports)
+
+# ...
+
+# --- Seed Data Logic ---
 def seed_data(db: Session):
     if db.query(sql_models.AssetDB).first():
         return # Already seeded
@@ -92,8 +99,14 @@ def seed_data(db: Session):
             usage_hours_per_day=12.0
         )
     ]
-    db.add_all(assets)
-    db.commit()
+    try:
+        db.add_all(assets)
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        print("Data already seeded by another worker (Race Condition handled).")
+
+# ...
 
 # --- Logic: Asset Health Algorithm (The "Heart") ---
 
