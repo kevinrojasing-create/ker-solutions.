@@ -81,8 +81,8 @@ class ApiService {
   // Use 10.0.2.2 for Android Emulator to access localhost
   // Use localhost for Web
   static String get baseUrl {
-    // ☁️ URL de Producción (Render)
-    return "https://ker-solutions.onrender.com"; 
+    // Local environment for V63 development (Port 8001)
+    return "http://localhost:8001"; 
   }
 
   Future<List<Asset>> getAssets() async {

@@ -1,0 +1,31 @@
+# Backend V63 - MVP Requirements (Free Tier)
+# Core dependencies already installed in v63
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+sqlalchemy==2.0.25
+aiosqlite==0.19.0
+pydantic==2.5.3
+pydantic-settings==2.1.0
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.6
+python-dotenv==1.0.0
+
+# NEW: OCR functionality (Tesseract)
+pytesseract==0.3.10
+Pillow==10.2.0
+
+# NEW: AI Diagnosis (Google Gemini - FREE tier)
+google-generativeai==0.3.2
+
+# NEW: Push Notifications (Firebase - FREE)
+firebase-admin==6.4.0
+
+# NEW: Background Tasks (APScheduler - FREE)
+apscheduler==3.10.4
+
+# Image processing utilities
+opencv-python-headless==4.9.0.80
+
+# For cost estimation and data handling
+pydantic[email]==2.5.3
